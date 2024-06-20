@@ -1,0 +1,27 @@
+ I would like to propose three options for extracting and querying data between our Snowflake account and the ABC Snowflake account. Below are the detailed approaches:
+
+Option 1: Extract Data to Iceberg Table in S3
+Extract Data: Use the snowflake-connector-python to connect to the ABC Snowflake account and perform incremental data extracts.
+Store in Iceberg Table: Save the extracted data as an Iceberg table in S3. Perform SCD type operations in Iceberg if existing data is updated.
+Read Iceberg Table: Read the Iceberg table as an unmanaged Iceberg table.
+Approval Needed: Confirm with ABC if they agree to copying their data into S3.
+
+Option 2: Use Trino or Starburst to Query Both Snowflake Accounts
+Configure Connectors: Create separate configuration files for each Snowflake account in the Trino/Starburst catalog directory.
+Execute Query: Use SQL to join tables from both accounts.
+sql
+Copy code
+SELECT a.*, b.*
+FROM snowflake1.schema1.table1 a
+INNER JOIN snowflake2.schema2.table2 b
+ON a.common_field = b.common_field;
+Performance Check: Conduct a POC to ensure the performance meets our requirements and both trino/starburst approved in our organization
+
+Option 3: Ingest External Data Into Snowflake with SnowPark and JDBC
+
+Set Up Network Policies: Configure the source Snowflake account to allow connections from the target account’s IP addresses.
+Create Secrets for Authentication: Store the source Snowflake account credentials in Snowflake Secrets.
+Create External Access Integration: Define a network rule and an external access integration in the target Snowflake account.
+Create a Java UDF: Develop a Java UDF in Snowflake to connect to the source account, execute a query, and store the results as a table
+
+Still network rule option is not enabled in our organization. 
