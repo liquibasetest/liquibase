@@ -1,5 +1,136 @@
-    SELECT LISTAGG(COLUMN_NAME, ', ') WITHIN GROUP (ORDER BY ORDINAL_POSITION) INTO :columns_to_include
-    FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_NAME = 'your_table'
-    AND TABLE_SCHEMA = 'your_schema'
-    AND COLUMN_NAME NOT IN ('EFF_DT', 'Value');
+import json
+import snowflake.connector
+import os
+
+def lambda_handler(event, context):
+    # Get input parameters
+    queryid = event['queryid']
+    tableid = event['tableid']
+    tablename = event['tablename']
+    application = event['application']
+    
+    # Assign environment variables to local variables
+    snowflake_user = os.environ['SNOWFLAKE_USER']
+    snowflake_password = os.environ['SNOWFLAKE_PASSWORD']
+    snowflake_account = os.environ['SNOWFLAKE_ACCOUNT']
+    snowflake_warehouse = os.environ['SNOWFLAKE_WAREHOUSE']
+    snowflake_database = os.environ['SNOWFLAKE_DATABASE']
+    snowflake_schema = os.environ['SNOWFLAKE_SCHEMA']
+    audit_table = os.environ.get('AUDIT_TABLE', 'your_audit_table')  # Assuming audit table name is provided
+    
+    # Connect to Snowflake
+    conn = snowflake.connector.connect(
+        user=snowflake_user,
+        password=snowflake_password,
+        account=snowflake_account,
+        warehouse=snowflake_warehouse,
+        database=snowflake_database,
+        schema=snowflake_schema
+    )
+    
+    cursor = conn.cursor()
+    
+    try:
+        # Check if the table exists
+        if not check_table_exists(cursor, tablename, snowflake_schema):
+            # Check the query status using queryid
+            query_status = get_query_status(cursor, queryid)
+            raise Exception(f"Table '{tablename}' does not exist. Query ID '{queryid}' has status '{query_status}'.")
+        
+        # Create the view based on the application type
+        if application == 'real':
+            create_real_view(cursor, tablename, snowflake_schema)
+        elif application == 'batch':
+            create_batch_view(cursor, tablename, snowflake_schema, audit_table)
+        else:
+            raise Exception(f"Invalid application type: {application}")
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps('View created successfully')
+        }
+        
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps(f"Error: {str(e)}")
+        }
+    
+    finally:
+        cursor.close()
+        conn.close()
+
+def check_table_exists(cursor, tablename, schema):
+    cursor.execute(f"""
+        SELECT 1
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_NAME = '{tablename}'
+        AND TABLE_SCHEMA = '{schema}'
+    """)
+    return cursor.fetchone() is not None
+
+def get_query_status(cursor, queryid):
+    cursor.execute(f"""
+        SELECT STATUS
+        FROM INFORMATION_SCHEMA.QUERY_HISTORY
+        WHERE QUERY_ID = '{queryid}'
+    """)
+    
+    query_status = cursor.fetchone()
+    return query_status[0] if query_status else 'UNKNOWN'
+
+def create_real_view(cursor, tablename, schema):
+    cursor.execute(f"""
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = '{tablename}'
+        AND TABLE_SCHEMA = '{schema}'
+        AND COLUMN_NAME NOT IN ('EFF_DT', 'Value')
+        ORDER BY ORDINAL_POSITION;
+    """)
+    
+    columns = [row[0] for row in cursor.fetchall()]
+    columns_to_include = ", ".join(columns)
+    columns_to_include += ", TO_DATE(partition_dt, 'YYYYMMDD') AS EFF_DT"
+    
+    create_view_sql = f"""
+    CREATE OR REPLACE VIEW {schema}.{tablename} AS
+    SELECT {columns_to_include}
+    FROM {schema}.{tablename}
+    """
+    
+    cursor.execute(create_view_sql)
+
+def create_batch_view(cursor, tablename, schema, audit_table):
+    cursor.execute(f"""
+        SELECT TO_DATE(MAX(partition_dt), 'YYYYMMDD') AS EFF_DT, MAX(cntxt) AS max_cntxt
+        FROM {schema}.{audit_table}
+    """)
+    
+    result = cursor.fetchone()
+    eff_dt = result[0]
+    max_cntxt = result[1]
+    
+    cursor.execute(f"""
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = '{tablename}'
+        AND TABLE_SCHEMA = '{schema}'
+        AND COLUMN_NAME NOT IN ('EFF_DT', 'Value')
+        ORDER BY ORDINAL_POSITION;
+    """)
+    
+    columns = [row[0] for row in cursor.fetchall()]
+    columns_to_include = ", ".join(columns)
+    columns_to_include += f", '{eff_dt}' AS EFF_DT"
+    
+    create_view_sql = f"""
+    CREATE OR REPLACE VIEW {schema}.{tablename} AS
+    SELECT {columns_to_include}
+    FROM {schema}.{tablename}
+    JOIN {schema}.{audit_table}
+    ON {schema}.{tablename}.partition_dt = '{eff_dt}'
+    AND {schema}.{audit_table}.cntxt = {max_cntxt}
+    """
+    
+    cursor.execute(create_view_sql)
