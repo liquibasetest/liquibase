@@ -1,4 +1,4 @@
-    SELECT LISTAGG(COLUMN_NAME, ', ') INTO :columns_to_include
+    SELECT LISTAGG(COLUMN_NAME, ', ') WITHIN GROUP (ORDER BY ORDINAL_POSITION) INTO :columns_to_include
     FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_NAME = 'your_table'
     AND TABLE_SCHEMA = 'your_schema'
