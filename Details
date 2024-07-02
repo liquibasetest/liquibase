@@ -1,9 +1,5 @@
-from pyspark.sql import SparkSession
-
-# Create SparkSession
-spark = SparkSession.builder \
-    .appName("S3 Example") \
-    .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
-    .config("spark.hadoop.fs.s3a.access.key", "<your-access-key>") \
-    .config("spark.hadoop.fs.s3a.secret.key", "<your-secret-key>") \
-    .getOrCreate()
+    SELECT LISTAGG(COLUMN_NAME, ', ') INTO :columns_to_include
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'your_table'
+    AND TABLE_SCHEMA = 'your_schema'
+    AND COLUMN_NAME NOT IN ('EFF_DT', 'Value');
