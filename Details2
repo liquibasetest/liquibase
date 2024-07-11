@@ -1,3 +1,17 @@
-SELECT PARQUET_FILE(GET(@my_stage/path/to/parquet/files/partition_date='2023-01-01'));
-SELECT PARQUET_FILE(GET(@my_stage/path/to/parquet/files/partition_date='2023-01-02'));
--- Repeat for each partition_date you want to query
+-- Example of copying Parquet files partitioned by 'partition_date'
+COPY INTO my_table
+FROM (SELECT METADATA$FILENAME AS file_path, $1
+      FROM @my_external_stage
+      (FILE_FORMAT => 'PARQUET')
+     )
+WHERE file_path LIKE 'partition_date=%'
+ON_ERROR = 'CONTINUE'; -- Adjust error handling as per your requirements
+
+
+
+-- Query to retrieve recent errors in the COPY INTO operation
+SELECT *
+FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY())
+WHERE ERROR_CODE IS NOT NULL
+ORDER BY START_TIME DESC
+LIMIT 10;
