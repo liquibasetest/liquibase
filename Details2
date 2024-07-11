@@ -1,11 +1,7 @@
--- Example of copying Parquet files partitioned by 'partition_date'
 COPY INTO my_table
-FROM (SELECT METADATA$FILENAME AS file_path, $1
-      FROM @my_external_stage
-      (FILE_FORMAT => 'PARQUET')
-     )
-WHERE file_path LIKE 'partition_date=%'
-ON_ERROR = 'CONTINUE'; -- Adjust error handling as per your requirements
+FROM '@my_stage/path/to/parquet/files/'
+FILE_FORMAT = (TYPE = 'PARQUET')
+ON_ERROR = 'CONTINUE'; -- Adjust ON_ERROR as per your error handling strategy
 
 
 
