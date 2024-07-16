@@ -4,12 +4,14 @@ import boto3
 # Initialize S3 client
 s3_client = boto3.client('s3')
 
-# Download Liquibase JAR and changelog file from S3
+# Download Liquibase JAR, Snowflake JDBC driver JAR, and changelog file from S3
 s3_client.download_file('your-bucket', 'path/to/liquibase.jar', '/tmp/liquibase.jar')
+s3_client.download_file('your-bucket', 'path/to/snowflake-jdbc.jar', '/tmp/snowflake-jdbc.jar')
 s3_client.download_file('your-bucket', 'path/to/changelog.xml', '/tmp/changelog.xml')
 
-# Path to the downloaded files
+# Paths to the downloaded files
 liquibase_jar_path = "/tmp/liquibase.jar"
+snowflake_jdbc_jar_path = "/tmp/snowflake-jdbc.jar"
 changelog_path = "/tmp/changelog.xml"
 
 # Snowflake connection details
@@ -17,9 +19,10 @@ snowflake_url = "jdbc:snowflake://youraccount.snowflakecomputing.com:443/"
 snowflake_user = "youruser"
 snowflake_password = "yourpassword"
 
-# Liquibase command
+# Liquibase command using -cp to include both JARs
 command = (
-    f"java -jar {liquibase_jar_path} --changeLogFile={changelog_path} "
+    f"java -cp {liquibase_jar_path}:{snowflake_jdbc_jar_path} liquibase.integration.commandline.Main "
+    f"--changeLogFile={changelog_path} "
     f"--url={snowflake_url} --username={snowflake_user} --password={snowflake_password} update"
 )
 
