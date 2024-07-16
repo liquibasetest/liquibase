@@ -1,15 +1,38 @@
-from subprocess import Popen, PIPE, STDOUT
+import subprocess
+import boto3
 
-# Path to your Liquibase JAR
-liquibase_jar_path = "s3://your-bucket/path/to/liquibase.jar"
+# Initialize S3 client
+s3_client = boto3.client('s3')
 
-# Command to execute Liquibase (example)
-command = f"java -jar {liquibase_jar_path} --changeLogFile=changelog.xml --url=jdbc:snowflake://youraccount.snowflakecomputing.com:443/?user=youruser&password=yourpassword"
+# Download Liquibase JAR and changelog file from S3
+s3_client.download_file('your-bucket', 'path/to/liquibase.jar', '/tmp/liquibase.jar')
+s3_client.download_file('your-bucket', 'path/to/changelog.xml', '/tmp/changelog.xml')
 
-# Execute Liquibase command
-process = Popen(command, shell=True, stdout=PIPE, stderr=STDOUT)
-output, error = process.communicate()
-print(output.decode())
+# Path to the downloaded files
+liquibase_jar_path = "/tmp/liquibase.jar"
+changelog_path = "/tmp/changelog.xml"
 
-if error:
-    print(error.decode())
+# Snowflake connection details
+snowflake_url = "jdbc:snowflake://youraccount.snowflakecomputing.com:443/"
+snowflake_user = "youruser"
+snowflake_password = "yourpassword"
+
+# Liquibase command
+command = (
+    f"java -jar {liquibase_jar_path} --changeLogFile={changelog_path} "
+    f"--url={snowflake_url} --username={snowflake_user} --password={snowflake_password} update"
+)
+
+try:
+    # Execute the command using subprocess.run with check=True
+    result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    # Print the output
+    print("Output from Liquibase command:")
+    print(result.stdout.decode())
+
+except subprocess.CalledProcessError as e:
+    # Handle errors
+    print("Error from Liquibase command:")
+    print(e.stderr.decode())
+    raise  # Re-raise the exception if needed
