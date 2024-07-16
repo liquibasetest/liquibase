@@ -1,0 +1,15 @@
+from subprocess import Popen, PIPE, STDOUT
+
+# Path to your Liquibase JAR
+liquibase_jar_path = "s3://your-bucket/path/to/liquibase.jar"
+
+# Command to execute Liquibase (example)
+command = f"java -jar {liquibase_jar_path} --changeLogFile=changelog.xml --url=jdbc:snowflake://youraccount.snowflakecomputing.com:443/?user=youruser&password=yourpassword"
+
+# Execute Liquibase command
+process = Popen(command, shell=True, stdout=PIPE, stderr=STDOUT)
+output, error = process.communicate()
+print(output.decode())
+
+if error:
+    print(error.decode())
