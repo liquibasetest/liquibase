@@ -1,3 +1,17 @@
+command = [
+    "java", "-cp", f"{liquibase_jar_path}:{snowflake_jdbc_jar_path}",
+    "liquibase.integration.commandline.Main",
+    "--changeLogFile", changelog_path,
+    "--url", snowflake_url,
+    "--username", snowflake_user,
+    "--password", snowflake_password,
+    "update"
+]
+
+# Print the command for debugging purposes
+print(f"Command to be executed: {' '.join(command)}")
+
+
 import subprocess
 import boto3
 
