@@ -1,1 +1,3 @@
-Please disregard the activity of matching the Parquet field names to ensure case consistency with other files. As long as the Parquet field names are the same, case differences can be ignored.
+col1 varchar as (parse_json(metadata$external_table_partition):col1::varchar),
+col2 number as (parse_json(metadata$external_table_partition):col2::number),
+col3 timestamp_tz as (parse_json(metadata$external_table_partition):col3::timestamp_tz)
