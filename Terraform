@@ -1,46 +1,7 @@
-import sys
-from awsglue.transforms import *
-from awsglue.utils import getResolvedOptions
-from pyspark.context import SparkContext
-from awsglue.context import GlueContext
-from awsglue.dynamicframe import DynamicFrame
-from pyspark.sql import SQLContext
-from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType
+Please disregard the task of matching the historical copied files to S3, which should align with directly written AWS S3 files. We identified the issue related to case sensitivity when creating external tables. Therefore, you can remove this item from the backlog if it has already been created.
 
-# Initialize GlueContext
-glueContext = GlueContext(SparkContext.getOrCreate())
-spark = glueContext.spark_session
 
-# Sample data with partition key (e.g., country)
-data = [
-    {"id": 1, "name": "John Doe", "age": 30, "country": "USA"},
-    {"id": 2, "name": "Jane Smith", "age": 25, "country": "USA"},
-    {"id": 3, "name": "Jake White", "age": 35, "country": "Canada"}
-]
 
-# Define schema
-schema = StructType([
-    StructField("id", IntegerType(), True),
-    StructField("name", StringType(), True),
-    StructField("age", IntegerType(), True),
-    StructField("country", StringType(), True)
-])
 
-# Create Spark DataFrame
-df = spark.createDataFrame(data, schema)
 
-# Convert to DynamicFrame
-dyf = DynamicFrame.fromDF(df, glueContext, "dyf")
 
-# Write to Parquet with partitioning
-output_path = "s3://your-output-bucket/sample_data/"
-glueContext.write_dynamic_frame.from_options(
-    frame = dyf,
-    connection_type = "s3",
-    connection_options = {
-        "path": output_path,
-        "partitionKeys": ["country"]
-    },
-    format = "parquet"
-)
