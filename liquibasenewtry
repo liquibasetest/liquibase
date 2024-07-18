@@ -1,55 +1,5 @@
-command = [
-    "java", "-cp", f"{liquibase_jar_path}:{snowflake_jdbc_jar_path}",
-    "liquibase.integration.commandline.Main",
-    "--changeLogFile", changelog_path,
-    "--url", snowflake_url,
-    "--username", snowflake_user,
-    "--password", snowflake_password,
-    "update"
-]
+I have reviewed the Snowflake documentation regarding case sensitivity, particularly for JSON/CSV and Parquet files. In our current approach, we extract the $1 variant value from Parquet files and create tables from it. We use the GET keyword to retrieve values.
 
-# Print the command for debugging purposes
-print(f"Command to be executed: {' '.join(command)}")
+To address the case sensitivity issue, we can use the GET_IGNORE_CASE keyword. I have tested this with a mix of lower and upper case fields within the same file, and it works correctly. I will also test a scenario where some Parquet files contain lower case field names and others contain upper case field names to ensure it functions as expected.
 
-
-import subprocess
-import boto3
-
-# Initialize S3 client
-s3_client = boto3.client('s3')
-
-# Download Liquibase JAR, Snowflake JDBC driver JAR, and changelog file from S3
-s3_client.download_file('your-bucket', 'path/to/liquibase.jar', '/tmp/liquibase.jar')
-s3_client.download_file('your-bucket', 'path/to/snowflake-jdbc.jar', '/tmp/snowflake-jdbc.jar')
-s3_client.download_file('your-bucket', 'path/to/changelog.xml', '/tmp/changelog.xml')
-
-# Paths to the downloaded files
-liquibase_jar_path = "/tmp/liquibase.jar"
-snowflake_jdbc_jar_path = "/tmp/snowflake-jdbc.jar"
-changelog_path = "/tmp/changelog.xml"
-
-# Snowflake connection details
-snowflake_url = "jdbc:snowflake://youraccount.snowflakecomputing.com:443/"
-snowflake_user = "youruser"
-snowflake_password = "yourpassword"
-
-# Liquibase command using -cp to include both JARs
-command = (
-    f"java -cp {liquibase_jar_path}:{snowflake_jdbc_jar_path} liquibase.integration.commandline.Main "
-    f"--changeLogFile={changelog_path} "
-    f"--url={snowflake_url} --username={snowflake_user} --password={snowflake_password} update"
-)
-
-try:
-    # Execute the command using subprocess.run with check=True
-    result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    # Print the output
-    print("Output from Liquibase command:")
-    print(result.stdout.decode())
-
-except subprocess.CalledProcessError as e:
-    # Handle errors
-    print("Error from Liquibase command:")
-    print(e.stderr.decode())
-    raise  # Re-raise the exception if needed
+Once confirmed, we can proceed without converting field names to upper or lower case.
