@@ -1,7 +1,1 @@
-Please disregard the task of matching the historical copied files to S3, which should align with directly written AWS S3 files. We identified the issue related to case sensitivity when creating external tables. Therefore, you can remove this item from the backlog if it has already been created.
-
-
-
-
-
-
+Please disregard the activity of matching the Parquet field names to ensure case consistency with other files. As long as the Parquet field names are the same, case differences can be ignored.
