@@ -1,47 +1,85 @@
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, lit, rand, round, date_format, from_unixtime
-from datetime import datetime, timedelta
+# Install necessary packages
+!pip install langchain==0.1.13
+!pip install openai==1.14.2
+!pip install langchain-openai==0.1.0
+!pip install huggingface-hub==0.21.4
 
-# Create a Spark session
-spark = SparkSession.builder \
-    .appName("RepartitionAndRewriteData") \
-    .getOrCreate()
+# Set up OpenAI API key
+import os
+os.environ["OPENAI_API_KEY"] = "sk-PLfFwP2352352352hdfhdfhdhKQm3523vXr2dL8hVowXdt"
 
-# Read data into a DataFrame
-dataframe = spark.read \
-    .format("parquet") \
-    .option("basePath", "s3://your-bucket/path/to/incomefile") \
-    .load("s3://your-bucket/path/to/incomefile")
+# Import necessary libraries
+from langchain_openai import OpenAI
+from langchain.llms import HuggingFaceEndpoint
 
-# Define the range for partition_dt
-start_date = datetime(2020, 2, 2)
-end_date = datetime.now()
+# Create OpenAI language model object
+llm = OpenAI(model_name="gpt-3.5-turbo-instruct")
 
-# Generate random dates within the specified range
-delta = end_date - start_date
-random_date = start_date + timedelta(days=rand() * delta.days)
+# Define a query
+our_query = "What is the currency of India?"
 
-# Convert the random date to the desired format (yyyyMMdd)
-new_partition_dt = random_date.strftime("%Y%m%d")
+# Generate a response using the OpenAI model
+completion = llm.invoke(our_query)
+print(completion)
 
-# Repartition the DataFrame based on the contxt_id. This ensures that all records with the same contxt_id will be processed together.
-dataframe = dataframe.repartition("contxt_id")
+# Set up Hugging Face API token
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = "hf_IuiVdfh546464564wrdgdfgdgfdPJaIlkYU"
 
-# Update the necessary fields with new values
-# For example, change values in "some_field1", "some_field2", "some_field3", "some_field4", and "some_field5" columns
-dataframe = dataframe.withColumn("some_field1", lit("new_value1")) \
-                     .withColumn("some_field2", lit("new_value2")) \
-                     .withColumn("some_field3", lit("new_value3")) \
-                     .withColumn("some_field4", lit("new_value4")) \
-                     .withColumn("some_field5", lit("new_value5")) \
-                     .withColumn("partition_dt", lit(new_partition_dt))
+# Create Hugging Face language model object
+llm = HuggingFaceEndpoint(repo_id="mistralai/Mistral-7B-Instruct-v0.2")
 
-# Write data to new partition folders based on the updated partition_dt and contxt_id
-dataframe.write \
-    .partitionBy("partition_dt", "contxt_id") \
-    .format("parquet") \
-    .mode("overwrite") \
-    .save("s3://your-bucket/output-path")
+# Generate a response using the Hugging Face model
+completion = llm.invoke(our_query)
+print(completion)
 
-# Stop Spark session
-spark.stop()
+
+---------------------------------------------------------------------------------------------
+
+#Hello! It seems like you want to import the Streamlit library in Python. Streamlit is a powerful open-source framework used for building web applications with interactive data visualizations and machine learning models. To import Streamlit, you'll need to ensure that you have it installed in your Python environment.
+#Once you have Streamlit installed, you can import it into your Python script using the import statement,
+
+import streamlit as st
+
+#As Langchain team has been working aggresively on improving the tool, we can see a lot of changes happening every weeek,
+#As a part of it, the below import has been depreciated
+#from langchain.llms import OpenAI
+
+#New import from langchain, which replaces the above
+from langchain_openai import OpenAI
+
+#When deployed on huggingface spaces, this values has to be passed using Variables & Secrets setting, as shown in the video :)
+#import os
+#os.environ["OPENAI_API_KEY"] = "sk-PLfFwPq6y24234234234FJ1Uc234234L8hVowXdt"
+
+#Function to return the response
+def load_answer(question):
+    # "text-davinci-003" model is depreciated, so using the latest one https://platform.openai.com/docs/deprecations
+    llm = OpenAI(model_name="gpt-3.5-turbo-instruct",temperature=0)
+
+    #Last week langchain has recommended to use invoke function for the below please :)
+    answer=llm.invoke(question)
+    return answer
+
+
+#App UI starts here
+st.set_page_config(page_title="LangChain Demo", page_icon=":robot:")
+st.header("LangChain Demo")
+
+#Gets the user input
+def get_text():
+    input_text = st.text_input("You: ", key="input")
+    return input_text
+
+
+user_input=get_text()
+response = load_answer(user_input)
+
+submit = st.button('Generate')  
+
+#If generate button is clicked
+if submit:
+
+    st.subheader("Answer:")
+
+    st.write(response)
+
