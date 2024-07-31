@@ -1,3 +1,5 @@
+Please find the presentation on using Iceberg tables in Snowflake for the upcoming ELT meeting. Let me know if you need any additional information.
+
 WITH json_data AS (
   SELECT 
     table_name,
