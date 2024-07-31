@@ -1,3 +1,17 @@
+WITH json_data AS (
+  SELECT 
+    table_name,
+    OBJECT_AGG('column_name', column_name, 'group_name', group_name) AS column_data
+  FROM table_metadata
+  GROUP BY table_name, column_name, group_name
+)
+SELECT 
+  table_name,
+  OBJECT_CONSTRUCT('columns', ARRAY_AGG(column_data)) AS table_json
+FROM json_data
+GROUP BY table_name;
+
+
 In Snowflake, creating a storage integration with Amazon S3 involves setting up a secure connection between Snowflake and an S3 bucket. The process includes:
 
 Creating an IAM Role in AWS: This role grants Snowflake permissions to access the S3 bucket, with specific policies for reading and writing data.
