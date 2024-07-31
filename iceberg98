@@ -1,0 +1,48 @@
+For the Proof of Concept (POC), the key objective is to demonstrate the performance improvement and cost-efficiency of transitioning from using S3 Parquet files as external tables in Snowflake to using the Apache Iceberg format. The current approach has cost advantages but suffers from performance issues when querying non-partitioned fields. By converting S3 Parquet files to Iceberg format and accessing them as unmanaged Iceberg tables in Snowflake, we aim to enhance query performance while maintaining or reducing costs.
+
+Key Objective for the POC
+Current Approach
+External Tables in Snowflake: Parquet files stored in S3 are currently projected as external tables in Snowflake.
+Cost Efficiency: This approach reduces storage costs because data is stored in S3 and not within Snowflake.
+Performance Issues: Querying non-partitioned fields results in suboptimal performance, as the current setup does not leverage advanced partitioning or indexing mechanisms.
+Proposed Solution
+Iceberg Format Adoption: Convert the existing S3 Parquet files into the Iceberg format, which supports features like hidden partitioning, schema evolution, and efficient query planning.
+Unmanaged Iceberg Tables: Integrate these Iceberg files into Snowflake as unmanaged tables. Unmanaged tables mean that the data files remain in S3, but Iceberg handles metadata and schema evolution.
+Performance Optimization: The Iceberg format allows for more efficient querying, particularly on non-partitioned fields, due to its advanced indexing and partitioning strategies.
+Benefits and Goals
+Improved Query Performance:
+
+Partitioning and Indexing: Iceberg's hidden partitioning can optimize query performance on non-partitioned fields by reducing the amount of data scanned.
+Metadata Caching: Improved metadata management can speed up query planning and execution.
+Cost Efficiency:
+
+Storage Costs: By continuing to store data in S3, the solution maintains the cost benefits of using external storage.
+Compute Costs: Reduced query times can lower the overall compute costs in Snowflake.
+Scalability and Flexibility:
+
+Schema Evolution: Iceberg supports seamless schema changes without the need for costly and time-consuming migrations.
+Data Lineage and Time Travel: Iceberg’s built-in capabilities for data versioning and time travel enhance data governance and auditing capabilities.
+Future-Proofing:
+
+Compatibility with Various Tools: Iceberg's open-source nature and broad support across various data processing engines ensure long-term compatibility and flexibility.
+POC Implementation Plan
+Data Conversion:
+
+Convert a subset of S3 Parquet files to the Iceberg format.
+Verify data integrity and consistency post-conversion.
+Metadata Management:
+
+Set up Iceberg catalogs to manage metadata and schemas.
+Integrate with Snowflake as unmanaged Iceberg tables.
+Performance Testing:
+
+Conduct benchmark tests comparing query performance between the current Parquet-based setup and the new Iceberg-based setup.
+Focus on queries involving non-partitioned fields and complex analytical operations.
+Cost Analysis:
+
+Compare the storage and compute costs before and after the implementation.
+Project potential cost savings and performance gains at scale.
+Documentation and Reporting:
+
+Document the setup process, configurations, and performance results.
+Prepare a detailed report highlighting the benefits, challenges, and recommendations based on the POC findings.
