@@ -1,3 +1,5 @@
+Given that the majority of our compute will take place in the ABC Snowflake account, and the ABC team has already estimated the costs for that account, the usage in the AT Snowflake account is expected to be minimal. Additionally, it is uncertain whether other projects will utilize Snowflake. Therefore, I've provided an estimation for minimal credits for the year. I also inquired about the inclusion of 2024 in the budget, and even Ariel is uncertain about it. Thus, I'll share this estimation for now
+
 For the Proof of Concept (POC), the key objective is to demonstrate the performance improvement and cost-efficiency of transitioning from using S3 Parquet files as external tables in Snowflake to using the Apache Iceberg format. The current approach has cost advantages but suffers from performance issues when querying non-partitioned fields. By converting S3 Parquet files to Iceberg format and accessing them as unmanaged Iceberg tables in Snowflake, we aim to enhance query performance while maintaining or reducing costs.
 
 Key Objective for the POC
